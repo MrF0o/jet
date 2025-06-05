@@ -1,3 +1,3 @@
-# Text editor
+# Jet editor
 
-Terminal based text editor
+A relatively fast, terminal based text editor
