@@ -37,15 +37,7 @@ impl<'a> Editor<'a> {
 
         // Adjust horizontal scroll if needed (account for line numbers)
         let line_number_width = if self.show_line_numbers {
-            // Use consistent width based on total buffer size - count digits efficiently
-            let buffer_lines = self.buffer.content.len().max(1);
-            let mut digits = 1;
-            let mut n = buffer_lines;
-            while n >= 10 {
-                digits += 1;
-                n /= 10;
-            }
-            digits + 1 // +1 for spacing
+            self.buffer.line_number_width()
         } else {
             0
         };
@@ -71,16 +63,7 @@ impl Widget for Editor<'_> {
 
         // Calculate line number width (if enabled)
         let line_number_width = if self.show_line_numbers {
-            // Use consistent width based on total buffer size, not visible area
-            // This prevents shifting when scrolling - count digits efficiently
-            let total_lines = self.buffer.content.len().max(1);
-            let mut digits = 1;
-            let mut n = total_lines;
-            while n >= 10 {
-                digits += 1;
-                n /= 10;
-            }
-            digits + 1 // +1 for spacing
+            self.buffer.line_number_width()
         } else {
             0
         };
