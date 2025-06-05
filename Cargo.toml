@@ -1,12 +1,12 @@
 [package]
-name = "editor"
+name = "jet"
 version = "0.1.1"
 edition = "2021"
 description = "A fast, terminal-based text editor built with Rust and Ratatui"
 authors = ["MrF0o"]
 license = "MIT"
 repository = "https://github.com/MrF0o/editor"
-keywords = ["editor", "terminal", "text-editor", "tui"]
+keywords = ["editor", "terminal", "text-editor", "tui", "jet"]
 categories = ["command-line-utilities", "text-editors"]
 readme = "README.md"
 
