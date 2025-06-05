@@ -38,7 +38,7 @@ impl Default for CursorState {
             last_blink: std::time::Instant::now(),
             blink_on: true,
             last_activity: std::time::Instant::now(),
-            activity_timeout: std::time::Duration::from_millis(1000), // 1 second before blinking starts
+            activity_timeout: std::time::Duration::from_millis(500), // 500ms before blinking starts
         }
     }
 }
