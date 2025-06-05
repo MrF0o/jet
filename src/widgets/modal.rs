@@ -70,7 +70,7 @@ impl<'a> Modal<'a> {
     }
 }
 
-impl<'a> Widget for Modal<'a> {
+impl Widget for Modal<'_> {
     fn render(self, area: Rect, buf: &mut TuiBuffer) {
         let modal_area = self.centered_rect(area);
 
@@ -172,7 +172,7 @@ impl<'a> CommandPalette<'a> {
     }
 }
 
-impl<'a> Widget for CommandPalette<'a> {
+impl Widget for CommandPalette<'_> {
     fn render(self, area: Rect, buf: &mut TuiBuffer) {
         let modal_area = self.centered_rect(area);
 
@@ -256,7 +256,7 @@ impl<'a> Widget for CommandPalette<'a> {
     }
 }
 
-impl<'a> CursorSupport for CommandPalette<'a> {
+impl CursorSupport for CommandPalette<'_> {
     /// Calculate the cursor position within the command palette input field
     fn calculate_cursor_position(&self, logical_pos: (usize, usize), area: Rect) -> Position {
         let modal_area = self.centered_rect(area);

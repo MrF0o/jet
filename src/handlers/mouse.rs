@@ -4,8 +4,8 @@ use crate::{App, CommandMode};
 use anyhow::Result;
 use ratatui::crossterm::event::{MouseButton, MouseEvent, MouseEventKind};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tokio::sync::mpsc;
+use tokio::sync::RwLock;
 
 /// Mouse handler that processes mouse events
 pub struct MouseHandler {
@@ -272,18 +272,15 @@ impl MouseHandler {
 
     /// Handle mouse events in command palette mode
     async fn handle_command_mode_mouse(&self, mouse: MouseEvent) -> Result<()> {
-        match mouse.kind {
-            MouseEventKind::Down(MouseButton::Left) => {
-                // TODO: Check if click is within command palette area
-                // For now, just close the palette if clicked anywhere
-                if !self
-                    .is_click_in_command_palette(mouse.column, mouse.row)
-                    .await
-                {
-                    self.close_command_palette().await?;
-                }
+        if let MouseEventKind::Down(MouseButton::Left) = mouse.kind {
+            // TODO: Check if click is within command palette area
+            // For now, just close the palette if clicked anywhere
+            if !self
+                .is_click_in_command_palette(mouse.column, mouse.row)
+                .await
+            {
+                self.close_command_palette().await?;
             }
-            _ => {}
         }
 
         Ok(())
@@ -291,24 +288,21 @@ impl MouseHandler {
 
     /// Handle mouse events in file search mode
     async fn handle_file_search_mode_mouse(&self, mouse: MouseEvent) -> Result<()> {
-        match mouse.kind {
-            MouseEventKind::Down(MouseButton::Left) => {
-                // Click outside search - return to normal mode
-                static NORMAL_MODE: &str = "normal";
-                static FILE_SEARCH_CONTEXT: &str = "file_search";
-                static EDITOR_CONTEXT: &str = "editor";
+        if let MouseEventKind::Down(MouseButton::Left) = mouse.kind {
+            // Click outside search - return to normal mode
+            static NORMAL_MODE: &str = "normal";
+            static FILE_SEARCH_CONTEXT: &str = "file_search";
+            static EDITOR_CONTEXT: &str = "editor";
 
-                self.event_sender.send(AppEvent::ModeChanged {
-                    new_mode: NORMAL_MODE.into(),
-                })?;
-                self.event_sender.send(AppEvent::CursorHide {
-                    context: FILE_SEARCH_CONTEXT.into(),
-                })?;
-                self.event_sender.send(AppEvent::CursorShow {
-                    context: EDITOR_CONTEXT.into(),
-                })?;
-            }
-            _ => {}
+            self.event_sender.send(AppEvent::ModeChanged {
+                new_mode: NORMAL_MODE.into(),
+            })?;
+            self.event_sender.send(AppEvent::CursorHide {
+                context: FILE_SEARCH_CONTEXT.into(),
+            })?;
+            self.event_sender.send(AppEvent::CursorShow {
+                context: EDITOR_CONTEXT.into(),
+            })?;
         }
 
         Ok(())
@@ -316,24 +310,21 @@ impl MouseHandler {
 
     /// Handle mouse events in text search mode
     async fn handle_text_search_mode_mouse(&self, mouse: MouseEvent) -> Result<()> {
-        match mouse.kind {
-            MouseEventKind::Down(MouseButton::Left) => {
-                // Click outside search - return to normal mode
-                static NORMAL_MODE: &str = "normal";
-                static TEXT_SEARCH_CONTEXT: &str = "text_search";
-                static EDITOR_CONTEXT: &str = "editor";
+        if let MouseEventKind::Down(MouseButton::Left) = mouse.kind {
+            // Click outside search - return to normal mode
+            static NORMAL_MODE: &str = "normal";
+            static TEXT_SEARCH_CONTEXT: &str = "text_search";
+            static EDITOR_CONTEXT: &str = "editor";
 
-                self.event_sender.send(AppEvent::ModeChanged {
-                    new_mode: NORMAL_MODE.into(),
-                })?;
-                self.event_sender.send(AppEvent::CursorHide {
-                    context: TEXT_SEARCH_CONTEXT.into(),
-                })?;
-                self.event_sender.send(AppEvent::CursorShow {
-                    context: EDITOR_CONTEXT.into(),
-                })?;
-            }
-            _ => {}
+            self.event_sender.send(AppEvent::ModeChanged {
+                new_mode: NORMAL_MODE.into(),
+            })?;
+            self.event_sender.send(AppEvent::CursorHide {
+                context: TEXT_SEARCH_CONTEXT.into(),
+            })?;
+            self.event_sender.send(AppEvent::CursorShow {
+                context: EDITOR_CONTEXT.into(),
+            })?;
         }
 
         Ok(())

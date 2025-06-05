@@ -3,7 +3,7 @@ use crate::App;
 use ratatui::prelude::Rect;
 
 impl App {
-    /// Handle mouse scroll wheel with proper area bounds
+    /// Handle mouse scroll with proper bounds check on editor area bounds
     pub fn handle_mouse_scroll(&mut self, delta: i16, editor_area: Rect) {
         // Update scroll offset
         let (scroll_row, _scroll_col) = self.scroll_offset;
@@ -44,7 +44,11 @@ impl App {
         let adjusted_lines = if lines.abs() >= 8 {
             // This is likely a page up/down operation, use terminal height
             let page_size = editor_area.height as i16;
-            if lines > 0 { page_size } else { -page_size }
+            if lines > 0 {
+                page_size
+            } else {
+                -page_size
+            }
         } else {
             lines
         };
@@ -116,11 +120,7 @@ impl App {
                 .max()
                 .unwrap_or(0);
 
-            if max_line_length > visible_cols {
-                max_line_length - visible_cols
-            } else {
-                0
-            }
+            max_line_length.saturating_sub(visible_cols)
         } else {
             0
         }

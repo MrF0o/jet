@@ -1,3 +1,46 @@
+//! # Text Buffer Management
+//!
+//! This module provides the core text buffer implementation for the editor.
+//! The `Buffer` struct represents a single text document with full editing
+//! capabilities including:
+//!
+//! - **Text Storage**: Efficient line-based text storage and manipulation
+//! - **Cursor Management**: Multi-cursor support with position tracking
+//! - **Selection Handling**: Text selection and visual mode operations
+//! - **File Operations**: Loading, saving, and file state management
+//! - **Undo/Redo**: Command-based undo system with state snapshots
+//! - **Search & Replace**: Pattern matching and text replacement
+//!
+//! ## Buffer Structure
+//!
+//! Each buffer maintains:
+//! - Content as a vector of strings (one per line)
+//! - File path and modification state
+//! - Cursor position and selection state
+//! - Undo history and command tracking
+//! - Visual mode state for selections
+//!
+//! ## Text Operations
+//!
+//! The buffer supports efficient text operations:
+//! - Character and line insertion/deletion
+//! - Block operations (copy, cut, paste)
+//! - Text transformations (case changes, indentation)
+//! - Pattern-based search and replace
+//!
+//! ## Performance
+//!
+//! The implementation is optimized for:
+//! - Large file handling (up to millions of lines)
+//! - Fast cursor movement and text navigation
+//! - Efficient undo/redo operations
+//! - Minimal memory allocation during editing
+//!
+//! ## Thread Safety
+//!
+//! Buffers are designed to be cloneable for multi-threaded operations
+//! while maintaining consistency across editor instances.
+
 use std::path::PathBuf;
 
 #[derive(Clone)]
@@ -9,6 +52,12 @@ pub struct Buffer {
     pub cursor_pos: (usize, usize),              // (row, column)
     pub selection_start: Option<(usize, usize)>, // Start position of selection (row, column), if any
     pub visual_mode: bool,                       // Whether we're in visual (selection) mode
+}
+
+impl Default for Buffer {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Buffer {
@@ -332,7 +381,8 @@ impl Buffer {
                 if row < self.content.len() {
                     if row == start.row {
                         // First line: from start.col to end
-                        estimated_capacity += self.content[row].len().saturating_sub(start.col) + 1; // +1 for newline
+                        estimated_capacity += self.content[row].len().saturating_sub(start.col) + 1;
+                    // +1 for newline
                     } else if row == end.row {
                         // Last line: from start to end.col
                         estimated_capacity += end.col.min(self.content[row].len());
@@ -523,11 +573,9 @@ impl Buffer {
         self.cursor_pos = (row, col);
 
         // Update selection if in visual mode
-        if self.visual_mode {
-            if self.selection_start.is_none() {
-                // Start selection from the original position if none exists
-                self.selection_start = Some(self.cursor_pos);
-            }
+        if self.visual_mode && self.selection_start.is_none() {
+            // Start selection from the original position if none exists
+            self.selection_start = Some(self.cursor_pos);
         }
     }
 

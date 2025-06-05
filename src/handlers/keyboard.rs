@@ -3,8 +3,8 @@ use crate::{App, CommandMode};
 use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tokio::sync::mpsc;
+use tokio::sync::RwLock;
 
 /// Keyboard handler that processes keyboard events
 pub struct KeyboardHandler {
@@ -610,7 +610,7 @@ impl KeyboardHandler {
 
     /// Execute a command from the command palette
     async fn execute_command(&self, command: &str) -> Result<()> {
-        let parts: Vec<&str> = command.trim().split_whitespace().collect();
+        let parts: Vec<&str> = command.split_whitespace().collect();
         if parts.is_empty() {
             return Ok(());
         }

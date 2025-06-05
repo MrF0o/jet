@@ -1,7 +1,7 @@
-use crate::App;
 use crate::widgets::cursor::CursorSupport;
 use crate::widgets::editor::Editor;
 use crate::widgets::modal::CommandPalette;
+use crate::App;
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Paragraph},

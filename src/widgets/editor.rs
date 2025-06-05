@@ -59,7 +59,7 @@ impl<'a> Editor<'a> {
     }
 }
 
-impl<'a> Widget for Editor<'a> {
+impl Widget for Editor<'_> {
     fn render(self, area: Rect, buf: &mut TuiBuffer) {
         // No borders - use the full area for content
         let inner_area = area;
@@ -239,7 +239,7 @@ impl<'a> Widget for Editor<'a> {
 }
 
 // Implementation for a stateful widget version if needed later
-impl<'a> StatefulWidget for Editor<'a> {
+impl StatefulWidget for Editor<'_> {
     type State = ();
 
     fn render(self, area: Rect, buf: &mut TuiBuffer, _state: &mut Self::State) {

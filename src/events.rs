@@ -2,7 +2,7 @@ use anyhow::Result;
 use ratatui::crossterm::event::{KeyEvent, MouseEvent};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 
 /// All possible events in the application
 #[derive(Debug, Clone)]
@@ -62,18 +62,13 @@ pub enum AppEvent {
 }
 
 /// Event priority levels for ordering
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum EventPriority {
     Low = 0,
+    #[default]
     Normal = 1,
     High = 2,
     Critical = 3,
-}
-
-impl Default for EventPriority {
-    fn default() -> Self {
-        EventPriority::Normal
-    }
 }
 
 /// Enhanced event with priority and metadata

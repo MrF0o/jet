@@ -1,14 +1,57 @@
+//! # Configuration Management
+//!
+//! This module provides comprehensive configuration management for the text editor,
+//! supporting user preferences, key bindings, themes, and plugin settings.
+//!
+//! ## Configuration Structure
+//!
+//! The configuration system includes:
+//! - **Editor Settings**: Basic editor behavior and preferences
+//! - **Key Bindings**: Customizable keyboard shortcuts and commands
+//! - **Theme Configuration**: Colors, styles, and visual appearance
+//! - **Plugin Settings**: Plugin-specific configuration options
+//! - **Performance Tuning**: Performance-related settings and limits
+//!
+//! ## Configuration Sources
+//!
+//! Settings are loaded from multiple sources in priority order:
+//! 1. Command-line arguments (highest priority)
+//! 2. User configuration file (~/.config/editor/config.toml)
+//! 3. Project-specific configuration (.editor.toml)
+//! 4. Default built-in configuration (lowest priority)
+//!
+//! ## File Formats
+//!
+//! Configuration supports multiple formats:
+//! - **TOML**: Primary configuration format (config.toml)
+//! - **JSON**: Alternative format for programmatic generation
+//! - **YAML**: Human-readable alternative format
+//!
+//! ## Key Features
+//!
+//! - **Hot Reloading**: Automatic configuration updates without restart
+//! - **Validation**: Schema validation with helpful error messages
+//! - **Migration**: Automatic migration between configuration versions
+//! - **Backup**: Automatic backup of working configurations
+//! - **Environment Variables**: Override settings via environment
+//!
+//! ## Default Settings
+//!
+//! The system provides sensible defaults for all settings,
+//! ensuring the editor works out-of-the-box while remaining
+//! highly customizable for power users.
+
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 pub use clipboard::{ClipboardContext, ClipboardProvider};
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 
 /// Editor configuration
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Config {
     /// General editor settings
     #[serde(default)]
@@ -126,17 +169,6 @@ fn default_show_menu_bar() -> bool {
 }
 fn default_show_minimap() -> bool {
     false
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            editor: EditorConfig::default(),
-            ui: UiConfig::default(),
-            keybindings: HashMap::new(),
-            plugins: HashMap::new(),
-        }
-    }
 }
 
 impl Default for EditorConfig {

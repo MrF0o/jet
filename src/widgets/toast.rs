@@ -278,7 +278,7 @@ impl<'a> ToastWidget<'a> {
     }
 }
 
-impl<'a> Widget for ToastWidget<'a> {
+impl Widget for ToastWidget<'_> {
     fn render(self, area: Rect, buf: &mut TuiBuffer) {
         self.manager.render(area, buf);
     }

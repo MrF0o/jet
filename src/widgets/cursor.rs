@@ -132,9 +132,7 @@ impl CursorManager {
 
     /// Get or create a cursor state for a given context
     pub fn get_or_create_cursor(&mut self, context: &str) -> &mut CursorState {
-        self.cursors
-            .entry(context.to_string())
-            .or_insert_with(CursorState::default)
+        self.cursors.entry(context.to_string()).or_default()
     }
 
     /// Set the active cursor context - ONLY ONE CURSOR ACTIVE AT A TIME
