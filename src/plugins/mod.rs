@@ -153,7 +153,7 @@ impl PluginManager {
         let config: PluginConfig = serde_json::from_str(&config_str)?;
 
         // For now, just create a placeholder plugin
-        // In a real implementation, we would load the plugin code and commands
+        // TODO: rquickjs integration
         let plugin = Plugin {
             id: config.id.clone(),
             name: config.name.clone(),

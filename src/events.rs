@@ -16,7 +16,7 @@ pub enum AppEvent {
     /// Buffer-related events
     BufferChanged {
         buffer_id: usize,
-        content: Arc<str>, // Use Arc to make cloning cheaper
+        content: Arc<str>,
     },
     BufferCursorMoved {
         buffer_id: usize,
@@ -31,27 +31,27 @@ pub enum AppEvent {
 
     /// UI events
     ModeChanged {
-        new_mode: Arc<str>, // Use Arc to make cloning cheaper
+        new_mode: Arc<str>,
     },
     StatusMessage {
-        message: Arc<str>, // Use Arc to make cloning cheaper
+        message: Arc<str>,
     },
     ToastMessage {
-        message: Arc<str>,    // Use Arc to make cloning cheaper
-        toast_type: Arc<str>, // Use Arc to make cloning cheaper
+        message: Arc<str>,
+        toast_type: Arc<str>,
     },
     ShowCommandPalette,
     HideCommandPalette,
 
     /// Cursor events
     CursorShow {
-        context: Arc<str>, // Use Arc to make cloning cheaper
+        context: Arc<str>,
     },
     CursorHide {
-        context: Arc<str>, // Use Arc to make cloning cheaper
+        context: Arc<str>,
     },
     CursorMove {
-        context: Arc<str>, // Use Arc to make cloning cheaper
+        context: Arc<str>,
         row: usize,
         col: usize,
     },
