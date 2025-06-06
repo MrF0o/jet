@@ -68,7 +68,7 @@ impl App {
         // Update status bar content before rendering
         self.update_status_bar();
 
-        // Render the status bar widget (clone is necessary for Widget trait)
+        // Render the status bar widget
         f.render_widget(self.status_bar.clone(), area);
     }
 

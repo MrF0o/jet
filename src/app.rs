@@ -107,7 +107,7 @@ impl App {
             status_bar: crate::widgets::StatusBar::new(),
             mouse_drag_start: None,
         };
-        
+
         app.init_status_bar();
         app
     }
@@ -142,7 +142,7 @@ impl App {
             status_bar: crate::widgets::StatusBar::new(),
             mouse_drag_start: None,
         };
-        
+
         app.init_status_bar();
         Ok(app)
     }
@@ -342,14 +342,6 @@ impl App {
             .with_style(Style::default().fg(Color::White).bg(Color::LightBlue));
         self.status_bar.set_slot(modified_slot);
 
-        // Selection info slot (center, when applicable)
-        let selection_slot = StatusSlot::new("selection", "")
-            .with_alignment(SlotAlignment::Center)
-            .with_priority(70)
-            .with_style(Style::default().fg(Color::Black).bg(Color::Yellow))
-            .with_visibility(false); // Hidden by default
-        self.status_bar.set_slot(selection_slot);
-
         // Mode indicator slot (right side, high priority)
         let mode_slot = StatusSlot::new("mode", "NORMAL")
             .with_alignment(SlotAlignment::Right)
@@ -373,28 +365,22 @@ impl App {
             // Update file info
             self.status_bar.update_slot_content("file", &buffer.name);
 
-            // Update cursor position
-            let cursor_info = format!("Ln {}, Col {}", row + 1, col + 1);
-            self.status_bar.update_slot_content("cursor", cursor_info);
+            if let Some(selected_text) = buffer.get_selected_text() {
+                // Update cursor position with selection info
+                let char_count = selected_text.len();
+                let cursor_info =
+                    format!("Ln {}, Col {} ({} selected)", row + 1, col + 1, char_count);
+                self.status_bar.update_slot_content("cursor", cursor_info);
+            } else {
+                // Update cursor position without selection info
+                let cursor_info = format!("Ln {}, Col {}", row + 1, col + 1);
+                self.status_bar.update_slot_content("cursor", cursor_info);
+            }
 
             // Update modified status
             let modified_text = if buffer.modified { "Unsaved" } else { "Saved" };
-            self.status_bar.update_slot_content("modified", modified_text);
-
-            // Update selection info if there's a selection
-            if let Some(selected_text) = buffer.get_selected_text() {
-                let char_count = selected_text.len();
-                let line_count = selected_text.matches('\n').count() + 1;
-                let selection_info = if line_count > 1 {
-                    format!("Selection: {} lines, {} chars", line_count, char_count)
-                } else {
-                    format!("Selection: {} chars", char_count)
-                };
-                self.status_bar.update_slot_content("selection", selection_info);
-                self.status_bar.show_slot("selection");
-            } else {
-                self.status_bar.hide_slot("selection");
-            }
+            self.status_bar
+                .update_slot_content("modified", modified_text);
 
             // Update mode indicator
             let mode_text = match self.command_mode {
@@ -407,7 +393,8 @@ impl App {
 
             // Update buffer count
             let buffer_info = format!("Buffer {}/{}", self.active_buffer + 1, self.buffers.len());
-            self.status_bar.update_slot_content("buffer_count", buffer_info);
+            self.status_bar
+                .update_slot_content("buffer_count", buffer_info);
         }
     }
 }
@@ -435,7 +422,7 @@ impl Clone for App {
             status_bar: crate::widgets::StatusBar::new(), // Create new instance
             mouse_drag_start: self.mouse_drag_start,
         };
-        
+
         app.init_status_bar();
         app
     }
@@ -459,7 +446,7 @@ impl Default for App {
             status_bar: crate::widgets::StatusBar::new(),
             mouse_drag_start: None,
         };
-        
+
         app.init_status_bar();
         app
     }
