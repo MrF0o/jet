@@ -20,7 +20,7 @@
 //!
 //! ## Performance
 //!
-//! Designed to handle large files efficiently while keeping 
+//! Designed to handle large files efficiently while keeping
 //! cursor movement and editing operations fast.
 
 use std::path::PathBuf;
@@ -546,8 +546,13 @@ impl Buffer {
                 col = 0;
             }
             CursorMovement::BufferEnd => {
-                row = self.content.len() - 1;
-                col = self.content[row].len();
+                if self.content.is_empty() {
+                    row = 0;
+                    col = 0;
+                } else {
+                    row = self.content.len() - 1;
+                    col = self.content[row].len();
+                }
             }
         }
 

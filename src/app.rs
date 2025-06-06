@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use ratatui::{
-    Terminal,
     backend::CrosstermBackend,
     crossterm::event::{self, Event},
+    Terminal,
 };
 use tokio::sync::RwLock;
 

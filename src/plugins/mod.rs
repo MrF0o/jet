@@ -1,5 +1,5 @@
 //! Plugin system for the editor
-//! 
+//!
 //! Makes the editor hackable - you can add your own features and commands.
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
@@ -215,7 +215,8 @@ impl PluginManager {
         for entry in fs::read_dir(src)? {
             let entry = entry?;
             let path = entry.path();
-            let file_name = path.file_name()
+            let file_name = path
+                .file_name()
                 .ok_or_else(|| anyhow!("Invalid file name in path: {}", path.display()))?;
             let dest_path = dst.join(file_name);
 

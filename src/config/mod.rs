@@ -11,7 +11,7 @@
 //! 4. Built-in defaults
 //!
 //! ## File formats
-//! 
+//!
 //! We support TOML (preferred), JSON, and YAML config files.
 //!
 //! ## Features
