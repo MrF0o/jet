@@ -228,11 +228,19 @@ impl KeyboardHandler {
 
             buffer.insert_char(c);
 
+            let (row, col) = buffer.cursor_pos;
             let content: Arc<str> = buffer.content_as_string().into();
             drop(app);
+
+            // Send both buffer changed and cursor moved events to trigger scroll adjustment
             self.event_sender.send(AppEvent::BufferChanged {
                 buffer_id: 0,
                 content,
+            })?;
+            self.event_sender.send(AppEvent::BufferCursorMoved {
+                buffer_id: 0,
+                row,
+                col,
             })?;
         }
 
@@ -252,11 +260,19 @@ impl KeyboardHandler {
             }
             buffer.insert_newline();
 
+            let (row, col) = buffer.cursor_pos;
             let content: Arc<str> = buffer.content_as_string().into();
             drop(app);
+
+            // Send both events to ensure proper scroll adjustment
             self.event_sender.send(AppEvent::BufferChanged {
                 buffer_id: 0,
                 content,
+            })?;
+            self.event_sender.send(AppEvent::BufferCursorMoved {
+                buffer_id: 0,
+                row,
+                col,
             })?;
         }
 
@@ -277,11 +293,19 @@ impl KeyboardHandler {
                 buffer.backspace();
             }
 
+            let (row, col) = buffer.cursor_pos;
             let content: Arc<str> = buffer.content_as_string().into();
             drop(app);
+
+            // Send both events to ensure proper scroll adjustment
             self.event_sender.send(AppEvent::BufferChanged {
                 buffer_id: 0,
                 content,
+            })?;
+            self.event_sender.send(AppEvent::BufferCursorMoved {
+                buffer_id: 0,
+                row,
+                col,
             })?;
         }
 
@@ -302,11 +326,19 @@ impl KeyboardHandler {
                 buffer.delete();
             }
 
+            let (row, col) = buffer.cursor_pos;
             let content: Arc<str> = buffer.content_as_string().into();
             drop(app);
+
+            // Send both events to ensure proper scroll adjustment
             self.event_sender.send(AppEvent::BufferChanged {
                 buffer_id: 0,
                 content,
+            })?;
+            self.event_sender.send(AppEvent::BufferCursorMoved {
+                buffer_id: 0,
+                row,
+                col,
             })?;
         }
 

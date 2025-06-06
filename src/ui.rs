@@ -165,20 +165,19 @@ impl App {
             let (row, col) = buffer.cursor_pos;
             let (scroll_row, scroll_col) = self.scroll_offset;
 
-            // Adjust vertical scroll if needed (no borders)
+            // Define scroll margins - keep cursor at least 3 lines from edges when possible
+            let scroll_margin = 3;
             let visible_rows = area.height as usize;
 
-            // Only change scroll position if the cursor is outside the visible area
-            // This prevents the "snapping back" effect when scrolling manually
-            if row < scroll_row {
-                // Cursor is above visible area - scroll up just enough to show it
-                self.scroll_offset.0 = row;
-            } else if row >= scroll_row + visible_rows {
-                // Cursor is below visible area - scroll down just enough to show it
-                // Don't subtract 1 to avoid the snapping behavior
-                self.scroll_offset.0 = row.saturating_sub(visible_rows) + 1;
+            // Adjust vertical scroll with margin consideration
+            if row < scroll_row + scroll_margin {
+                // Cursor is too close to the top, scroll up
+                self.scroll_offset.0 = row.saturating_sub(scroll_margin);
+            } else if row >= scroll_row + visible_rows - scroll_margin {
+                // Cursor is too close to the bottom, scroll down
+                let new_scroll = row.saturating_sub(visible_rows.saturating_sub(scroll_margin + 1));
+                self.scroll_offset.0 = new_scroll;
             }
-            // Otherwise, don't change vertical scroll (allows manual scrolling)
 
             // Adjust horizontal scroll if needed (account for line numbers)
             let line_number_width = if self.get_line_numbers_setting() {
