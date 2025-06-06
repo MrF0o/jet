@@ -1,45 +1,27 @@
 //! # Text Buffer Management
 //!
-//! This module provides the core text buffer implementation for the editor.
-//! The `Buffer` struct represents a single text document with full editing
-//! capabilities including:
+//! Core text buffer that represents a single document/file.
 //!
-//! - **Text Storage**: Efficient line-based text storage and manipulation
-//! - **Cursor Management**: Multi-cursor support with position tracking
-//! - **Selection Handling**: Text selection and visual mode operations
-//! - **File Operations**: Loading, saving, and file state management
-//! - **Undo/Redo**: Command-based undo system with state snapshots
-//! - **Search & Replace**: Pattern matching and text replacement
+//! ## What it does
 //!
-//! ## Buffer Structure
+//! - Stores text as lines in memory
+//! - Tracks cursor position and text selections  
+//! - Handles file loading/saving
+//! - Manages undo/redo history
+//! - Supports search & replace
 //!
-//! Each buffer maintains:
-//! - Content as a vector of strings (one per line)
-//! - File path and modification state
-//! - Cursor position and selection state
-//! - Undo history and command tracking
-//! - Visual mode state for selections
+//! ## Structure
 //!
-//! ## Text Operations
-//!
-//! The buffer supports efficient text operations:
-//! - Character and line insertion/deletion
-//! - Block operations (copy, cut, paste)
-//! - Text transformations (case changes, indentation)
-//! - Pattern-based search and replace
+//! Each buffer keeps track of:
+//! - File content (vector of lines)
+//! - File path and whether it's been modified
+//! - Cursor position and any selected text
+//! - Undo history for changes
 //!
 //! ## Performance
 //!
-//! The implementation is optimized for:
-//! - Large file handling (up to millions of lines)
-//! - Fast cursor movement and text navigation
-//! - Efficient undo/redo operations
-//! - Minimal memory allocation during editing
-//!
-//! ## Thread Safety
-//!
-//! Buffers are designed to be cloneable for multi-threaded operations
-//! while maintaining consistency across editor instances.
+//! Designed to handle large files efficiently while keeping 
+//! cursor movement and editing operations fast.
 
 use std::path::PathBuf;
 

@@ -1,5 +1,6 @@
 //! Plugin system for the editor
-//! This allows the editor to be extremely hackable, like VS Code
+//! 
+//! Makes the editor hackable - you can add your own features and commands.
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -214,7 +215,9 @@ impl PluginManager {
         for entry in fs::read_dir(src)? {
             let entry = entry?;
             let path = entry.path();
-            let dest_path = dst.join(path.file_name().unwrap());
+            let file_name = path.file_name()
+                .ok_or_else(|| anyhow!("Invalid file name in path: {}", path.display()))?;
+            let dest_path = dst.join(file_name);
 
             if path.is_dir() {
                 fs::create_dir_all(&dest_path)?;

@@ -384,7 +384,13 @@ impl KeyboardHandler {
                 })?;
             }
             _ => {
-                todo!("Implement file search handling");
+                // File search not implemented yet, return to normal mode
+                self.event_sender.send(AppEvent::StatusMessage {
+                    message: "File search not implemented yet".into(),
+                })?;
+                self.event_sender.send(AppEvent::ModeChanged {
+                    new_mode: "normal".into(),
+                })?;
             }
         }
 

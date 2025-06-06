@@ -1,45 +1,30 @@
 //! # Configuration Management
 //!
-//! This module provides comprehensive configuration management for the text editor,
-//! supporting user preferences, key bindings, themes, and plugin settings.
+//! Handles all the editor's settings - themes, keybindings, preferences, and plugin configs.
 //!
-//! ## Configuration Structure
+//! ## How it works
 //!
-//! The configuration system includes:
-//! - **Editor Settings**: Basic editor behavior and preferences
-//! - **Key Bindings**: Customizable keyboard shortcuts and commands
-//! - **Theme Configuration**: Colors, styles, and visual appearance
-//! - **Plugin Settings**: Plugin-specific configuration options
-//! - **Performance Tuning**: Performance-related settings and limits
+//! Config comes from several places (in order of priority):
+//! 1. Command line args
+//! 2. User config file (~/.config/editor/config.toml)  
+//! 3. Project config (.editor.toml in your project)
+//! 4. Built-in defaults
 //!
-//! ## Configuration Sources
+//! ## File formats
+//! 
+//! We support TOML (preferred), JSON, and YAML config files.
 //!
-//! Settings are loaded from multiple sources in priority order:
-//! 1. Command-line arguments (highest priority)
-//! 2. User configuration file (~/.config/editor/config.toml)
-//! 3. Project-specific configuration (.editor.toml)
-//! 4. Default built-in configuration (lowest priority)
+//! ## Features
 //!
-//! ## File Formats
+//! - Hot reloading - changes apply without restarting
+//! - Config validation with helpful error messages  
+//! - Auto-migration when config format changes
+//! - Backup of working configs
+//! - Environment variable overrides
 //!
-//! Configuration supports multiple formats:
-//! - **TOML**: Primary configuration format (config.toml)
-//! - **JSON**: Alternative format for programmatic generation
-//! - **YAML**: Human-readable alternative format
+//! ## Defaults
 //!
-//! ## Key Features
-//!
-//! - **Hot Reloading**: Automatic configuration updates without restart
-//! - **Validation**: Schema validation with helpful error messages
-//! - **Migration**: Automatic migration between configuration versions
-//! - **Backup**: Automatic backup of working configurations
-//! - **Environment Variables**: Override settings via environment
-//!
-//! ## Default Settings
-//!
-//! The system provides sensible defaults for all settings,
-//! ensuring the editor works out-of-the-box while remaining
-//! highly customizable for power users.
+//! Everything has sensible defaults so the editor works right out of the box.
 
 use std::collections::HashMap;
 use std::fs;
@@ -278,6 +263,14 @@ impl ConfigManager {
                 self.config.editor.word_wrap =
                     value.as_bool().ok_or_else(|| anyhow!("Expected boolean"))?;
             }
+            "editor.autoSave" => {
+                self.config.editor.auto_save =
+                    value.as_bool().ok_or_else(|| anyhow!("Expected boolean"))?;
+            }
+            "editor.autoSaveDelay" => {
+                self.config.editor.auto_save_delay =
+                    value.as_u64().ok_or_else(|| anyhow!("Expected number"))?;
+            }
             "ui.theme" => {
                 self.config.ui.theme = value
                     .as_str()
@@ -308,6 +301,8 @@ impl ConfigManager {
                 Ok(serde_json::json!(self.config.editor.highlight_current_line))
             }
             "editor.wordWrap" => Ok(serde_json::json!(self.config.editor.word_wrap)),
+            "editor.autoSave" => Ok(serde_json::json!(self.config.editor.auto_save)),
+            "editor.autoSaveDelay" => Ok(serde_json::json!(self.config.editor.auto_save_delay)),
             "ui.theme" => Ok(serde_json::json!(self.config.ui.theme)),
             "ui.fontSize" => Ok(serde_json::json!(self.config.ui.font_size)),
             _ => Err(anyhow!("Unsupported setting path: {}", path)),
