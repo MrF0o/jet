@@ -71,6 +71,16 @@ impl StatusSlot {
         self.max_width = max_width;
         self
     }
+
+    pub fn with_min_width(mut self, min_width: u16) -> Self {
+        self.min_width = Some(min_width);
+        self
+    }
+
+    pub fn with_max_width(mut self, max_width: u16) -> Self {
+        self.max_width = Some(max_width);
+        self
+    }
 }
 
 /// Status bar widget with slot-based system similar to VS Code
@@ -152,8 +162,18 @@ impl StatusBar {
         self
     }
 
-    /// Get all visible slots grouped by alignment and sorted by priority
-    fn get_organized_slots(&self) -> (Vec<&StatusSlot>, Vec<&StatusSlot>, Vec<&StatusSlot>) {
+    /// Get the number of slots in the status bar
+    pub fn slot_count(&self) -> usize {
+        self.slots.len()
+    }
+
+    /// Get a reference to a slot by ID
+    pub fn get_slot(&self, id: &str) -> Option<&StatusSlot> {
+        self.slots.get(id)
+    }
+
+    /// Get all visible slots grouped by alignment and sorted by priority (public for testing)
+    pub fn get_organized_slots(&self) -> (Vec<&StatusSlot>, Vec<&StatusSlot>, Vec<&StatusSlot>) {
         let mut left_slots: Vec<&StatusSlot> = Vec::new();
         let mut center_slots: Vec<&StatusSlot> = Vec::new();
         let mut right_slots: Vec<&StatusSlot> = Vec::new();
@@ -380,5 +400,54 @@ mod tests {
 
         status_bar.remove_slot("test");
         assert!(!status_bar.slots.contains_key("test"));
+    }
+
+    #[test]
+    fn test_status_bar_organization_and_rendering() {
+        let mut status_bar = StatusBar::new();
+
+        // Add slots with different alignments and priorities
+        status_bar.set_slot(
+            StatusSlot::new("left1", "Left 1")
+                .with_alignment(SlotAlignment::Left)
+                .with_priority(10),
+        );
+        status_bar.set_slot(
+            StatusSlot::new("left2", "Left 2")
+                .with_alignment(SlotAlignment::Left)
+                .with_priority(20),
+        );
+        status_bar.set_slot(
+            StatusSlot::new("center1", "Center 1")
+                .with_alignment(SlotAlignment::Center)
+                .with_priority(30),
+        );
+        status_bar.set_slot(
+            StatusSlot::new("right1", "Right 1")
+                .with_alignment(SlotAlignment::Right)
+                .with_priority(40),
+        );
+        status_bar.set_slot(
+            StatusSlot::new("right2", "Right 2")
+                .with_alignment(SlotAlignment::Right)
+                .with_priority(50),
+        );
+
+        // Organize slots
+        let (left_slots, center_slots, right_slots) = status_bar.get_organized_slots();
+
+        // Check left slots
+        assert_eq!(left_slots.len(), 2);
+        assert_eq!(left_slots[0].id, "left2");
+        assert_eq!(left_slots[1].id, "left1");
+
+        // Check center slots
+        assert_eq!(center_slots.len(), 1);
+        assert_eq!(center_slots[0].id, "center1");
+
+        // Check right slots
+        assert_eq!(right_slots.len(), 2);
+        assert_eq!(right_slots[0].id, "right2");
+        assert_eq!(right_slots[1].id, "right1");
     }
 }
