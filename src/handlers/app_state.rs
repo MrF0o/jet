@@ -125,23 +125,6 @@ impl AppStateHandler {
         if let AppEvent::StatusMessage { message } = event {
             let mut app = self.app_state.write().await;
             app.status_message = Some(message.to_string());
-
-            // Also add the message as a toast notification
-            use crate::widgets::toast::{Toast, ToastType};
-            let message_str = message.as_ref();
-            let message_lower = message_str.to_lowercase();
-
-            let toast = if message_lower.contains("error") {
-                Toast::new(message_str.to_string(), ToastType::Error)
-            } else if message_lower.contains("success") || message_lower.contains("saved") {
-                Toast::new(message_str.to_string(), ToastType::Success)
-            } else if message_lower.contains("warning") {
-                Toast::new(message_str.to_string(), ToastType::Warning)
-            } else {
-                Toast::new(message_str.to_string(), ToastType::Info)
-            };
-
-            app.toast_manager.add_toast(toast);
         }
 
         Ok(())
