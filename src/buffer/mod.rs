@@ -580,9 +580,13 @@ impl Buffer {
     }
 
     /// Get the width needed for line numbers display
+    /// Always reserves space for at least 4 digits to prevent UI shifts
     pub fn line_number_width(&self) -> usize {
         let total_lines = self.content.len().max(1);
-        Self::count_digits(total_lines) + 1 // +1 for spacing
+        let calculated_width = Self::count_digits(total_lines);
+        // Reserve space for at least 4 digits (up to 9999 lines) to prevent UI shifts
+        let min_width = 4;
+        calculated_width.max(min_width) + 1 // +1 for spacing
     }
 }
 
