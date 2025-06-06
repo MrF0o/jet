@@ -55,6 +55,9 @@ pub struct App {
     /// Cursor manager for handling multiple independent cursors
     pub cursor_manager: CursorManager,
 
+    /// Status bar with slot-based system
+    pub status_bar: crate::widgets::StatusBar,
+
     /// Mouse drag start position for text selection
     pub mouse_drag_start: Option<(usize, usize)>,
 }
@@ -88,7 +91,7 @@ impl App {
             }
         }
 
-        Self {
+        let mut app = Self {
             running: true,
             buffers: vec![Buffer::new()],
             active_buffer: 0,
@@ -101,8 +104,12 @@ impl App {
             toast_manager: crate::widgets::toast::ToastManager::new(),
             show_command_palette: false,
             cursor_manager: CursorManager::new(),
+            status_bar: crate::widgets::StatusBar::new(),
             mouse_drag_start: None,
-        }
+        };
+        
+        app.init_status_bar();
+        app
     }
 
     pub async fn with_file(file_path: &str) -> Result<Self> {
@@ -119,7 +126,7 @@ impl App {
             .await
             .map_err(|e| anyhow!("Failed to open file '{}': {}", file_path, e))?;
 
-        Ok(Self {
+        let mut app = Self {
             running: true,
             buffers: vec![buffer],
             active_buffer: 0,
@@ -132,8 +139,12 @@ impl App {
             toast_manager: crate::widgets::toast::ToastManager::new(),
             show_command_palette: false,
             cursor_manager: CursorManager::new(),
+            status_bar: crate::widgets::StatusBar::new(),
             mouse_drag_start: None,
-        })
+        };
+        
+        app.init_status_bar();
+        Ok(app)
     }
 
     /// Run the application with the new event-driven architecture
@@ -304,6 +315,101 @@ impl App {
     pub fn buffer_count(&self) -> usize {
         self.buffers.len()
     }
+
+    /// Initialize the status bar with default slots
+    pub fn init_status_bar(&mut self) {
+        use crate::widgets::{SlotAlignment, StatusSlot};
+        use ratatui::style::{Color, Style};
+
+        // File info slot (left side, high priority)
+        let file_slot = StatusSlot::new("file", "")
+            .with_alignment(SlotAlignment::Left)
+            .with_priority(100)
+            .with_style(Style::default().fg(Color::White).bg(Color::LightBlue));
+        self.status_bar.set_slot(file_slot);
+
+        // Cursor position slot (left side, medium priority)
+        let cursor_slot = StatusSlot::new("cursor", "")
+            .with_alignment(SlotAlignment::Left)
+            .with_priority(90)
+            .with_style(Style::default().fg(Color::White).bg(Color::LightBlue));
+        self.status_bar.set_slot(cursor_slot);
+
+        // Modified status slot (left side, medium priority)
+        let modified_slot = StatusSlot::new("modified", "")
+            .with_alignment(SlotAlignment::Left)
+            .with_priority(80)
+            .with_style(Style::default().fg(Color::White).bg(Color::LightBlue));
+        self.status_bar.set_slot(modified_slot);
+
+        // Selection info slot (center, when applicable)
+        let selection_slot = StatusSlot::new("selection", "")
+            .with_alignment(SlotAlignment::Center)
+            .with_priority(70)
+            .with_style(Style::default().fg(Color::Black).bg(Color::Yellow))
+            .with_visibility(false); // Hidden by default
+        self.status_bar.set_slot(selection_slot);
+
+        // Mode indicator slot (right side, high priority)
+        let mode_slot = StatusSlot::new("mode", "NORMAL")
+            .with_alignment(SlotAlignment::Right)
+            .with_priority(100)
+            .with_style(Style::default().fg(Color::White).bg(Color::DarkGray));
+        self.status_bar.set_slot(mode_slot);
+
+        // Buffer count slot (right side, low priority)
+        let buffer_count_slot = StatusSlot::new("buffer_count", "")
+            .with_alignment(SlotAlignment::Right)
+            .with_priority(60)
+            .with_style(Style::default().fg(Color::Gray).bg(Color::LightBlue));
+        self.status_bar.set_slot(buffer_count_slot);
+    }
+
+    /// Update status bar slots with current application state
+    pub fn update_status_bar(&mut self) {
+        if let Some(buffer) = self.buffers.get(self.active_buffer) {
+            let (row, col) = buffer.cursor_pos;
+
+            // Update file info
+            self.status_bar.update_slot_content("file", &buffer.name);
+
+            // Update cursor position
+            let cursor_info = format!("Ln {}, Col {}", row + 1, col + 1);
+            self.status_bar.update_slot_content("cursor", cursor_info);
+
+            // Update modified status
+            let modified_text = if buffer.modified { "Unsaved" } else { "Saved" };
+            self.status_bar.update_slot_content("modified", modified_text);
+
+            // Update selection info if there's a selection
+            if let Some(selected_text) = buffer.get_selected_text() {
+                let char_count = selected_text.len();
+                let line_count = selected_text.matches('\n').count() + 1;
+                let selection_info = if line_count > 1 {
+                    format!("Selection: {} lines, {} chars", line_count, char_count)
+                } else {
+                    format!("Selection: {} chars", char_count)
+                };
+                self.status_bar.update_slot_content("selection", selection_info);
+                self.status_bar.show_slot("selection");
+            } else {
+                self.status_bar.hide_slot("selection");
+            }
+
+            // Update mode indicator
+            let mode_text = match self.command_mode {
+                CommandMode::Normal => "NORMAL",
+                CommandMode::Command => "COMMAND",
+                CommandMode::FileSearch => "FILE SEARCH",
+                CommandMode::TextSearch => "TEXT SEARCH",
+            };
+            self.status_bar.update_slot_content("mode", mode_text);
+
+            // Update buffer count
+            let buffer_info = format!("Buffer {}/{}", self.active_buffer + 1, self.buffers.len());
+            self.status_bar.update_slot_content("buffer_count", buffer_info);
+        }
+    }
 }
 
 // Make App cloneable for the event system
@@ -313,7 +419,7 @@ impl App {
 // The main UI render path now uses references to avoid cloning.
 impl Clone for App {
     fn clone(&self) -> Self {
-        Self {
+        let mut app = Self {
             running: self.running,
             buffers: self.buffers.clone(),
             active_buffer: self.active_buffer,
@@ -326,14 +432,18 @@ impl Clone for App {
             toast_manager: crate::widgets::toast::ToastManager::new(), // Create new instance
             show_command_palette: self.show_command_palette,
             cursor_manager: CursorManager::new(), // Create new instance
+            status_bar: crate::widgets::StatusBar::new(), // Create new instance
             mouse_drag_start: self.mouse_drag_start,
-        }
+        };
+        
+        app.init_status_bar();
+        app
     }
 }
 
 impl Default for App {
     fn default() -> Self {
-        Self {
+        let mut app = Self {
             running: true,
             buffers: vec![Buffer::new()],
             active_buffer: 0,
@@ -346,8 +456,12 @@ impl Default for App {
             toast_manager: crate::widgets::toast::ToastManager::new(),
             show_command_palette: false,
             cursor_manager: CursorManager::new(),
+            status_bar: crate::widgets::StatusBar::new(),
             mouse_drag_start: None,
-        }
+        };
+        
+        app.init_status_bar();
+        app
     }
 }
 

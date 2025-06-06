@@ -2,10 +2,7 @@ use crate::widgets::cursor::CursorSupport;
 use crate::widgets::editor::Editor;
 use crate::widgets::modal::CommandPalette;
 use crate::App;
-use ratatui::{
-    prelude::*,
-    widgets::{Block, Borders, Paragraph},
-};
+use ratatui::prelude::*;
 
 impl App {
     /// Main render function for the application UI
@@ -66,48 +63,13 @@ impl App {
         self.update_editor_cursor(area, show_line_numbers);
     }
 
-    /// Render the status line
-    fn render_status_line(&self, f: &mut Frame, area: Rect) {
-        if let Some(buffer) = self.buffers.get(self.active_buffer) {
-            let (row, col) = buffer.cursor_pos;
+    /// Render the status line using the new StatusBar widget
+    fn render_status_line(&mut self, f: &mut Frame, area: Rect) {
+        // Update status bar content before rendering
+        self.update_status_bar();
 
-            // Check if there's a selection and include selection info
-            let mut status = String::with_capacity(128); // Pre-allocate capacity
-            status.push_str(&buffer.name);
-            status.push_str(" | Ln ");
-            status.push_str(&(row + 1).to_string());
-            status.push_str(", Col ");
-            status.push_str(&(col + 1).to_string());
-            status.push_str(" | ");
-            status.push_str(if buffer.modified { "Unsaved" } else { "Saved" });
-
-            if let Some(selected_text) = buffer.get_selected_text() {
-                let char_count = selected_text.len();
-                let line_count = selected_text.matches('\n').count() + 1;
-                status.push_str(" | Selection: ");
-                if line_count > 1 {
-                    status.push_str(&line_count.to_string());
-                    status.push_str(" lines, ");
-                    status.push_str(&char_count.to_string());
-                    status.push_str(" chars");
-                } else {
-                    status.push_str(&char_count.to_string());
-                    status.push_str(" chars");
-                }
-            }
-
-            let block = Block::default()
-                .style(Style::default().bg(Color::Black))
-                .borders(Borders::NONE);
-
-            let status_widget = Paragraph::new(Line::from(vec![Span::styled(
-                status,
-                Style::default().fg(Color::White).bg(Color::LightBlue),
-            )]))
-            .block(block);
-
-            f.render_widget(status_widget, area);
-        }
+        // Render the status bar widget (clone is necessary for Widget trait)
+        f.render_widget(self.status_bar.clone(), area);
     }
 
     /// Render toast notifications
