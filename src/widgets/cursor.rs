@@ -82,17 +82,11 @@ impl StatefulWidget for Cursor {
         // Check if we're still in the activity period (cursor should be solid)
         let in_activity_period = now.duration_since(state.last_activity) < state.activity_timeout;
 
-        // Update blink state only if we're past the activity period
+        // Determine cursor visibility - during activity period always show, otherwise use blink state
         let should_show_cursor = if in_activity_period {
-            // During activity period, always show cursor (no blinking)
-            true
+            true // During activity period, always show cursor (no blinking)
         } else {
-            // After activity period, start blinking
-            if now.duration_since(state.last_blink) > std::time::Duration::from_millis(500) {
-                state.blink_on = !state.blink_on;
-                state.last_blink = now;
-            }
-            state.blink_on
+            state.blink_on // Use the centrally managed blink state
         };
 
         // Only render if we should show the cursor
@@ -157,14 +151,16 @@ impl CursorManager {
 
     /// Update cursor position for a specific context
     pub fn update_cursor_position(&mut self, context: &str, x: u16, y: u16) {
-        // ONLY update if this is the active context
-        if self.active_context.as_deref() == Some(context) {
-            let cursor_state = self.get_or_create_cursor(context);
+        let is_active_context = self.active_context.as_deref() == Some(context);
+        let cursor_state = self.get_or_create_cursor(context);
 
-            // Check if position actually changed (cursor movement activity)
-            let position_changed = cursor_state.position != Position::new(x, y);
+        // Check if position actually changed (cursor movement activity)
+        let position_changed = cursor_state.position != Position::new(x, y);
 
-            cursor_state.position = Position::new(x, y);
+        cursor_state.position = Position::new(x, y);
+
+        // Only show cursor if this is the active context
+        if is_active_context {
             cursor_state.visible = true;
 
             // If position changed, treat as activity
@@ -234,6 +230,45 @@ impl CursorManager {
     pub fn clear_all(&mut self) {
         self.cursors.clear();
         self.active_context = None;
+    }
+
+    /// Check if there are any active cursors that need animation
+    pub fn has_active_cursors(&self) -> bool {
+        self.cursors.values().any(|state| state.visible)
+    }
+
+    /// Tick cursor animation (called by async task)
+    pub fn tick_animation(&mut self) {
+        let now = std::time::Instant::now();
+
+        for cursor_state in self.cursors.values_mut() {
+            if !cursor_state.visible {
+                continue;
+            }
+
+            // Check if we're still in the activity period (cursor should be solid)
+            let in_activity_period =
+                now.duration_since(cursor_state.last_activity) < cursor_state.activity_timeout;
+
+            // Only blink if we're past the activity period
+            if !in_activity_period {
+                if now.duration_since(cursor_state.last_blink)
+                    > std::time::Duration::from_millis(500)
+                {
+                    cursor_state.blink_on = !cursor_state.blink_on;
+                    cursor_state.last_blink = now;
+                }
+            }
+        }
+    }
+
+    /// Get a snapshot of current blink states for change detection
+    pub fn get_blink_states(&self) -> Vec<bool> {
+        self.cursors
+            .values()
+            .filter(|state| state.visible)
+            .map(|state| state.blink_on)
+            .collect()
     }
 }
 

@@ -1,7 +1,7 @@
 use std::io::Stdout;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use ratatui::{
@@ -9,7 +9,7 @@ use ratatui::{
     crossterm::event::{self, Event},
     Terminal,
 };
-use tokio::sync::RwLock;
+use tokio::sync::{mpsc, RwLock};
 
 use crate::buffer::Buffer;
 use crate::events::EventBus;
@@ -178,14 +178,49 @@ impl App {
             }
         });
 
-        // Target frame rate
-        let frame_duration = Duration::from_millis(16);
-        let mut last_frame = Instant::now();
+        // Create redraw channel for animations to signal render needs
+        let (redraw_tx, mut redraw_rx) = mpsc::unbounded_channel::<()>();
 
-        // Main event loop
+        // Pure event-driven architecture for 0% CPU usage when idle
+        let mut needs_redraw = true; // Initial render
+
+        // Spawn cursor animation task using Tokio
+        let app_state_cursor = app_state.clone();
+        let redraw_signal = redraw_tx.clone();
+        let cursor_animation_handle = tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_millis(500));
+            loop {
+                interval.tick().await;
+
+                // Check if we need cursor updates
+                let (should_update, has_changes) = {
+                    let mut app = app_state_cursor.write().await;
+                    if !app.running {
+                        return; // Exit if app is closing
+                    }
+
+                    let has_active = app.cursor_manager.has_active_cursors();
+                    if has_active {
+                        let old_state = app.cursor_manager.get_blink_states();
+                        app.cursor_manager.tick_animation();
+                        let new_state = app.cursor_manager.get_blink_states();
+                        (true, old_state != new_state)
+                    } else {
+                        (false, false)
+                    }
+                };
+
+                if should_update && has_changes {
+                    // Signal that a redraw is needed
+                    let _ = redraw_signal.send(());
+                } else if !should_update {
+                    break; // Exit if no active cursors
+                }
+            }
+        });
+
+        // Main event loop - pure event-driven, 0% CPU when idle
         loop {
-            let frame_start = Instant::now();
-
             // Check if app should quit
             {
                 let app = app_state.read().await;
@@ -194,40 +229,63 @@ impl App {
                 }
             }
 
-            // Draw the UI - limit to target frame rate
-            if frame_start.duration_since(last_frame) >= frame_duration {
+            // Render immediately if needed, then wait for events
+            if needs_redraw {
                 let mut app = app_state.write().await;
                 if let Err(e) = terminal.draw(|f| app.render(f)) {
                     eprintln!("Rendering error: {}", e);
                     break;
                 }
-                drop(app); // Release lock immediately after drawing
-                last_frame = frame_start;
+                drop(app);
+                needs_redraw = false;
             }
 
-            // Handle events with timeout to maintain frame rate
-            // Check for events without blocking
-            if event::poll(Duration::from_millis(1))? {
-                match event::read()? {
-                    Event::Key(key) => {
-                        if let Err(e) = input_system.handle_key_input(key) {
-                            eprintln!("Error handling key input: {}", e);
+            // Wait for either terminal events or animation redraws
+            tokio::select! {
+                // Terminal events (user input, resize, etc.) - direct read for minimal latency
+                event_result = async {
+                    // Use async blocking to avoid task spawn overhead
+                    tokio::task::block_in_place(|| event::read())
+                } => {
+                    match event_result {
+                        Ok(event) => {
+                            match event {
+                                Event::Key(key) => {
+                                    if let Err(e) = input_system.handle_key_input(key) {
+                                        eprintln!("Error handling key input: {}", e);
+                                    }
+                                    needs_redraw = true;
+                                }
+                                Event::Mouse(mouse) => {
+                                    if let Err(e) = input_system.handle_mouse_input(mouse) {
+                                        eprintln!("Error handling mouse input: {}", e);
+                                    }
+                                    needs_redraw = true;
+                                }
+                                Event::Resize(_, _) => {
+                                    needs_redraw = true;
+                                }
+                                _ => {
+                                    // Other events don't need redraw
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Event read error: {}", e);
+                            break;
                         }
                     }
-                    Event::Mouse(mouse) => {
-                        if let Err(e) = input_system.handle_mouse_input(mouse) {
-                            eprintln!("Error handling mouse input: {}", e);
-                        }
-                    }
-                    Event::Resize(_, _) => {
-                        // Handle resize if needed
-                    }
-                    _ => {}
                 }
-            } else {
-                tokio::time::sleep(Duration::from_millis(1)).await;
+
+                // Animation redraw signals
+                _ = redraw_rx.recv() => {
+                    needs_redraw = true;
+                }
             }
         }
+
+        // Clean up cursor animation task
+        cursor_animation_handle.abort();
 
         match Arc::try_unwrap(app_state) {
             Ok(app_mutex) => {

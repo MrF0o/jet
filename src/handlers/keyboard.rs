@@ -55,10 +55,10 @@ impl KeyboardHandler {
 
     /// Handle keyboard input in normal mode
     async fn handle_normal_mode_key(&self, key: KeyEvent) -> Result<()> {
-        // Check for key combinations first
+        // Check for key combinations first - prioritize command palette for immediate response
         match (key.code, key.modifiers) {
             (KeyCode::Char('p'), KeyModifiers::ALT) => {
-                // Open command palette with Alt+P
+                // Open command palette with Alt+P - optimized for immediate response
                 self.event_sender.send(AppEvent::ModeChanged {
                     new_mode: "command".into(),
                 })?;
@@ -69,6 +69,7 @@ impl KeyboardHandler {
                 self.event_sender.send(AppEvent::CursorShow {
                     context: "command_palette".into(),
                 })?;
+                return Ok(()); // Exit immediately to minimize latency
             }
             (KeyCode::Char('q'), KeyModifiers::CONTROL) => {
                 // Quit with Ctrl+Q
